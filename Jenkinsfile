@@ -73,6 +73,7 @@ pipeline {
                     }
                 }
             })
+        }
     }
     stage('Deploy Staging') {
       steps {
