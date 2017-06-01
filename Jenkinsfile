@@ -44,9 +44,35 @@ pipeline {
       }
     }
     stage('More Tests') {
-      steps {
-        echo 'more tests'
-      }
+        agent none
+        when {
+            anyOf {
+                branch "master"
+                branch "release-*"
+            }
+        }
+        steps {
+            parallel(
+            'Frontend' : {
+                script {
+                    node {
+                        unstash 'ws'
+                        //sh 'gulp test'
+                        sh './frontEndTests.sh'
+                    }
+                }
+            },
+            'Performance' : {
+                script {
+                    node {
+                        docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {
+                            unstash 'ws'
+                            unstash 'war'
+                            sh './mvnw -B gatling:execute'
+                        }
+                    }
+                }
+            })
     }
     stage('Deploy Staging') {
       steps {
